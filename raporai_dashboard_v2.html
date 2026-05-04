@@ -1,0 +1,485 @@
+
+<h2 class="sr-only">Dashboard RaporAI – sistem prioritisasi intervensi sekolah berbasis Dapodik dan Rapor Pendidikan</h2>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); }
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.logo { width: 28px; height: 28px; border-radius: 6px; background: #1A3165; display: flex; align-items: center; justify-content: center; }
+.logo svg { width: 14px; height: 14px; }
+.app-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.app-sub { font-size: 11px; color: var(--color-text-secondary); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.badge-green { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; color: var(--color-text-success); background: var(--color-background-success); border: 0.5px solid var(--color-border-success); border-radius: 20px; padding: 3px 8px; }
+.dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.meta-item { font-size: 11px; color: var(--color-text-secondary); text-align: right; line-height: 1.4; }
+.meta-val { font-weight: 500; color: var(--color-text-primary); }
+
+.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 12px 16px; background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); }
+.kpi { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+.kpi-val { font-size: 20px; font-weight: 500; line-height: 1.2; }
+.kpi-label { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; line-height: 1.3; }
+.kpi-sub { font-size: 10px; color: var(--color-text-tertiary); margin-top: 1px; }
+
+.main { display: grid; grid-template-columns: 260px 1fr; height: 440px; }
+.sidebar { border-right: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-header { padding: 10px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.sidebar-title { font-size: 12px; font-weight: 500; color: var(--color-text-primary); display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.count-badge { font-size: 10px; color: var(--color-text-tertiary); }
+.filter-row { display: flex; gap: 5px; }
+.filter-row select { font-size: 11px; padding: 4px 6px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: var(--color-background-secondary); color: var(--color-text-primary); flex: 1; cursor: pointer; }
+.school-list { flex: 1; overflow-y: auto; }
+.school-item { padding: 9px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); cursor: pointer; transition: background 0.1s; border-left: 2px solid transparent; }
+.school-item:hover { background: var(--color-background-secondary); }
+.school-item.active { background: var(--color-background-info); border-left-color: #1A3165; }
+.school-row1 { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.school-name { font-size: 12px; font-weight: 500; color: var(--color-text-primary); line-height: 1.3; flex: 1; }
+.risk-pill { font-size: 10px; font-weight: 500; border-radius: 10px; padding: 1px 7px; white-space: nowrap; }
+.pill-kritis { background: #FEE2E2; color: #991B1B; }
+.pill-tinggi { background: #FEF3C7; color: #92400E; }
+.pill-sedang { background: #DBEAFE; color: #1E40AF; }
+.school-sub { font-size: 10px; color: var(--color-text-secondary); margin-bottom: 5px; }
+.rank-num { font-size: 10px; color: var(--color-text-tertiary); font-family: var(--font-mono); }
+.score-bar-wrap { display: flex; align-items: center; gap: 6px; }
+.score-bar-bg { flex: 1; height: 3px; background: var(--color-border-tertiary); border-radius: 2px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 2px; }
+.score-num { font-size: 10px; font-family: var(--font-mono); font-weight: 500; width: 20px; text-align: right; }
+.tags { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 4px; }
+.tag { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 500; }
+.tag-guru { background: #E8EDF5; color: #1A3165; }
+.tag-infra { background: #E5F2F8; color: #006BA6; }
+.tag-kesra { background: #E5F5EE; color: #0F6E56; }
+
+.detail { display: flex; flex-direction: column; overflow: hidden; }
+.detail-header { padding: 12px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; justify-content: space-between; align-items: flex-start; }
+.detail-name { font-size: 15px; font-weight: 500; color: var(--color-text-primary); line-height: 1.3; }
+.detail-meta { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+.score-big { text-align: right; }
+.score-big-num { font-size: 32px; font-weight: 500; line-height: 1; }
+.score-big-label { font-size: 10px; color: var(--color-text-secondary); }
+.trend-up { color: #10B981; font-size: 11px; }
+.trend-dn { color: #EF4444; font-size: 11px; }
+.trend-st { color: var(--color-text-tertiary); font-size: 11px; }
+
+.metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.metric-cell { }
+.metric-label { font-size: 10px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.metric-bar-wrap { display: flex; align-items: center; gap: 5px; }
+.metric-bar-bg { flex: 1; height: 4px; background: var(--color-border-tertiary); border-radius: 2px; overflow: hidden; }
+.metric-bar-fill { height: 100%; border-radius: 2px; }
+.metric-val { font-size: 11px; font-family: var(--font-mono); font-weight: 500; width: 22px; }
+
+.tabs { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); padding: 0 16px; }
+.tab { font-size: 12px; padding: 8px 12px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
+.tab.active { color: #1A3165; border-bottom-color: #1A3165; font-weight: 500; }
+.tab-content { flex: 1; overflow-y: auto; padding: 14px 16px; }
+
+.rekomendasi-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px 14px; margin-bottom: 8px; }
+.rekom-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.rekom-title { font-size: 12px; font-weight: 500; }
+.prio-badge { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 10px; }
+.rekom-body { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 8px; }
+.program-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip { font-size: 10px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 4px; padding: 2px 6px; color: var(--color-text-secondary); }
+.conf-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.conf-label { font-size: 10px; color: var(--color-text-tertiary); }
+.conf-bar-bg { flex: 1; height: 3px; background: var(--color-border-tertiary); border-radius: 2px; }
+.conf-bar-fill { height: 100%; border-radius: 2px; background: #10B981; }
+.conf-num { font-size: 10px; color: var(--color-text-secondary); font-family: var(--font-mono); }
+
+.driver-section { margin-bottom: 14px; }
+.driver-title { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.driver-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.driver-name { font-size: 12px; color: var(--color-text-primary); width: 160px; flex-shrink: 0; }
+.driver-bar-bg { flex: 1; height: 6px; background: var(--color-border-tertiary); border-radius: 3px; overflow: hidden; }
+.driver-bar-fill { height: 100%; border-radius: 3px; }
+.driver-val { font-size: 11px; font-family: var(--font-mono); font-weight: 500; width: 28px; text-align: right; }
+.driver-delta { font-size: 10px; width: 40px; text-align: right; }
+
+.chart-wrap { margin-bottom: 14px; }
+.chart-label { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+.bar-chart-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.bar-year { font-size: 11px; color: var(--color-text-tertiary); width: 30px; flex-shrink: 0; font-family: var(--font-mono); }
+.bar-bg { flex: 1; height: 16px; background: var(--color-background-secondary); border-radius: 3px; overflow: hidden; display: flex; align-items: center; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; display: flex; align-items: center; padding-left: 6px; }
+.bar-score { font-size: 10px; font-family: var(--font-mono); font-weight: 500; }
+.nat-line { position: relative; }
+.nat-marker { position: absolute; top: -2px; bottom: -2px; width: 1px; background: #EF4444; }
+
+.bottom-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px 16px; border-top: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); }
+.bottom-chart { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+.bottom-chart-title { font-size: 11px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+.bottom-chart-sub { font-size: 10px; color: var(--color-text-secondary); margin-bottom: 8px; }
+.dist-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.dist-label { font-size: 10px; color: var(--color-text-secondary); width: 60px; }
+.dist-bg { flex: 1; height: 8px; background: var(--color-background-secondary); border-radius: 2px; overflow: hidden; }
+.dist-fill { height: 100%; border-radius: 2px; }
+.dist-num { font-size: 10px; color: var(--color-text-tertiary); font-family: var(--font-mono); width: 30px; text-align: right; }
+</style>
+
+<div style="border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; background: var(--color-background-primary);">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo">
+        <svg viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" fill="white" opacity="0.9"/><rect x="8" y="1" width="5" height="5" rx="1" fill="white" opacity="0.5"/><rect x="1" y="8" width="5" height="5" rx="1" fill="white" opacity="0.5"/><rect x="8" y="8" width="5" height="5" rx="1" fill="white" opacity="0.9"/></svg>
+      </div>
+      <div>
+        <div class="app-name">RaporAI — Sistem Prioritisasi Intervensi Sekolah</div>
+        <div class="app-sub">Berbasis Dapodik + Rapor Pendidikan · Chofu Supaa · AI Incubation 2026</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="meta-item"><div class="meta-val">Kab. Bogor</div><div>Wilayah analisis</div></div>
+      <div class="meta-item"><div class="meta-val">Rapor Pendidikan 2024</div><div>Data terakhir</div></div>
+      <div class="badge-green"><div class="dot-pulse"></div>Model aktif</div>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-val" style="color:#1A3165">1.247</div><div class="kpi-label">Sekolah dianalisis</div><div class="kpi-sub">SD + SMP</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#DC2626">187</div><div class="kpi-label">Status kritis</div><div class="kpi-sub">Risk score ≥ 80</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#D97706">334</div><div class="kpi-label">Risiko tinggi</div><div class="kpi-sub">Risk score 60–79</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#1A3165">612</div><div class="kpi-label">Perlu PKB Guru</div><div class="kpi-sub">dari risk model</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#006BA6">489</div><div class="kpi-label">Perlu DAK Fisik</div><div class="kpi-sub">dari risk model</div></div>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">Daftar Prioritas <span class="count-badge" id="count-label">6 sekolah</span></div>
+        <div class="filter-row">
+          <select id="filter-jenjang" onchange="filterSchools()">
+            <option value="semua">Semua jenjang</option>
+            <option value="SD">SD</option>
+            <option value="SMP">SMP</option>
+          </select>
+          <select id="filter-risk" onchange="filterSchools()">
+            <option value="semua">Semua risiko</option>
+            <option value="Kritis">Kritis</option>
+            <option value="Tinggi">Tinggi</option>
+            <option value="Sedang">Sedang</option>
+          </select>
+        </div>
+      </div>
+      <div class="school-list" id="school-list"></div>
+    </div>
+
+    <div class="detail">
+      <div class="detail-header">
+        <div>
+          <div id="det-pill" style="margin-bottom:4px"></div>
+          <div class="detail-name" id="det-name">SDN 03 Cikaret</div>
+          <div class="detail-meta" id="det-meta">SD · Kec. Cibinong · Akreditasi C · Rank #1 dari 1.247 sekolah</div>
+        </div>
+        <div class="score-big">
+          <div class="score-big-num" id="det-score" style="color:#DC2626">91</div>
+          <div class="score-big-label">Risk Score</div>
+          <div id="det-trend" class="trend-dn">↓ memburuk</div>
+        </div>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric-cell">
+          <div class="metric-label">AKM Literasi</div>
+          <div class="metric-bar-wrap">
+            <div class="metric-bar-bg"><div class="metric-bar-fill" id="m-lit" style="background:#1A3165;width:38%"></div></div>
+            <div class="metric-val" id="mv-lit" style="color:#1A3165">38</div>
+          </div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">AKM Numerasi</div>
+          <div class="metric-bar-wrap">
+            <div class="metric-bar-bg"><div class="metric-bar-fill" id="m-num" style="background:#006BA6;width:32%"></div></div>
+            <div class="metric-val" id="mv-num" style="color:#006BA6">32</div>
+          </div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Iklim Keamanan</div>
+          <div class="metric-bar-wrap">
+            <div class="metric-bar-bg"><div class="metric-bar-fill" id="m-iklim" style="background:#0F6E56;width:55%"></div></div>
+            <div class="metric-val" id="mv-iklim" style="color:#0F6E56">55</div>
+          </div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Rata-rata nasional</div>
+          <div class="metric-bar-wrap">
+            <div class="metric-bar-bg"><div class="metric-bar-fill" style="background:#888;width:71%"></div></div>
+            <div class="metric-val" style="color:#888">71</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'tab-rekom')">Rekomendasi</div>
+        <div class="tab" onclick="switchTab(this,'tab-driver')">Driver Risiko</div>
+        <div class="tab" onclick="switchTab(this,'tab-tren')">Tren AKM</div>
+      </div>
+
+      <div class="tab-content" id="tab-rekom"></div>
+      <div class="tab-content" id="tab-driver" style="display:none"></div>
+      <div class="tab-content" id="tab-tren" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="bottom-chart">
+      <div class="bottom-chart-title">Distribusi AKM Literasi</div>
+      <div class="bottom-chart-sub">Kab. Bogor · 1.247 sekolah</div>
+      <div id="dist-chart"></div>
+    </div>
+    <div class="bottom-chart">
+      <div class="bottom-chart-title">Kebutuhan intervensi per jenis</div>
+      <div class="bottom-chart-sub">Berdasarkan profil dimensi risk model</div>
+      <div id="intervensi-chart"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCHOOLS = [
+  { id:1, rank:1, name:"SDN 03 Cikaret", jenjang:"SD", kec:"Cibinong", risk:91, level:"Kritis", akreditasi:"C",
+    lit:38, num:32, iklim:55, trend:"↓ memburuk", trendClass:"trend-dn", trendColor:"#EF4444",
+    intv:["Pengembangan Guru","Infrastruktur"],
+    drivers:[{n:"AKM Literasi",v:38,nat:71,bad:true},{n:"AKM Numerasi",v:32,nat:68,bad:true},{n:"Kondisi bangunan",v:28,nat:72,bad:true},{n:"Rasio guru-siswa",v:42,nat:65,bad:true},{n:"Sertifikasi guru",v:48,nat:74,bad:true},{n:"Iklim keamanan",v:55,nat:70,bad:false}],
+    akm:[52,48,44,40,38],
+    conf:[94,89] },
+  { id:2, rank:2, name:"SMPN 7 Gunung Putri", jenjang:"SMP", kec:"Gunung Putri", risk:87, level:"Kritis", akreditasi:"B",
+    lit:44, num:39, iklim:38, trend:"↓ memburuk", trendClass:"trend-dn", trendColor:"#EF4444",
+    intv:["Pengembangan Guru","Kesejahteraan Siswa"],
+    drivers:[{n:"Iklim keamanan",v:38,nat:70,bad:true},{n:"AKM Literasi",v:44,nat:71,bad:true},{n:"AKM Numerasi",v:39,nat:68,bad:true},{n:"Kualitas pembelajaran",v:52,nat:72,bad:true},{n:"Kepemimpinan instruksional",v:58,nat:73,bad:false},{n:"Kondisi bangunan",v:61,nat:72,bad:false}],
+    akm:[61,58,53,47,44],
+    conf:[88,82] },
+  { id:3, rank:3, name:"SDN 11 Sukaraja", jenjang:"SD", kec:"Sukaraja", risk:82, level:"Kritis", akreditasi:"B",
+    lit:51, num:46, iklim:62, trend:"→ stabil", trendClass:"trend-st", trendColor:"#888",
+    intv:["Infrastruktur","Kesejahteraan Siswa"],
+    drivers:[{n:"Kondisi bangunan",v:24,nat:72,bad:true},{n:"Ketersediaan fasilitas",v:35,nat:68,bad:true},{n:"AKM Literasi",v:51,nat:71,bad:true},{n:"AKM Numerasi",v:46,nat:68,bad:true},{n:"Iklim keamanan",v:62,nat:70,bad:false},{n:"Sertifikasi guru",v:65,nat:74,bad:false}],
+    akm:[55,54,53,52,51],
+    conf:[91,79] },
+  { id:4, rank:4, name:"SMPN 2 Citeureup", jenjang:"SMP", kec:"Citeureup", risk:76, level:"Tinggi", akreditasi:"B",
+    lit:57, num:52, iklim:68, trend:"→ stabil", trendClass:"trend-st", trendColor:"#888",
+    intv:["Pengembangan Guru"],
+    drivers:[{n:"Sertifikasi guru",v:41,nat:74,bad:true},{n:"Rasio guru-siswa",v:48,nat:65,bad:true},{n:"Kualitas pembelajaran",v:55,nat:72,bad:true},{n:"AKM Literasi",v:57,nat:71,bad:true},{n:"AKM Numerasi",v:52,nat:68,bad:true},{n:"Kondisi bangunan",v:72,nat:72,bad:false}],
+    akm:[62,61,59,58,57],
+    conf:[86] },
+  { id:5, rank:5, name:"SDN 01 Nanggewer", jenjang:"SD", kec:"Cibinong", risk:68, level:"Tinggi", akreditasi:"A",
+    lit:63, num:59, iklim:74, trend:"↑ membaik", trendClass:"trend-up", trendColor:"#10B981",
+    intv:["Kesejahteraan Siswa"],
+    drivers:[{n:"Indeks karakter siswa",v:48,nat:70,bad:true},{n:"AKM Literasi",v:63,nat:71,bad:true},{n:"Kualitas pembelajaran",v:66,nat:72,bad:true},{n:"Iklim keamanan",v:74,nat:70,bad:false},{n:"Kondisi bangunan",v:78,nat:72,bad:false},{n:"Sertifikasi guru",v:81,nat:74,bad:false}],
+    akm:[58,60,61,62,63],
+    conf:[81] },
+  { id:6, rank:6, name:"SMPN 5 Bojong Gede", jenjang:"SMP", kec:"Bojong Gede", risk:61, level:"Sedang", akreditasi:"A",
+    lit:67, num:63, iklim:78, trend:"↑ membaik", trendClass:"trend-up", trendColor:"#10B981",
+    intv:["Infrastruktur"],
+    drivers:[{n:"Ketersediaan fasilitas",v:52,nat:68,bad:true},{n:"AKM Literasi",v:67,nat:71,bad:true},{n:"Rasio guru-siswa",v:70,nat:65,bad:false},{n:"Iklim keamanan",v:78,nat:70,bad:false},{n:"Sertifikasi guru",v:82,nat:74,bad:false},{n:"AKM Numerasi",v:63,nat:68,bad:true}],
+    akm:[62,63,65,66,67],
+    conf:[84] },
+];
+
+const RISKCOLOR = { Kritis:"#DC2626", Tinggi:"#D97706", Sedang:"#2563EB" };
+const PILLCLASS = { Kritis:"pill-kritis", Tinggi:"pill-tinggi", Sedang:"pill-sedang" };
+const TAGCLASS  = { "Pengembangan Guru":"tag-guru", "Infrastruktur":"tag-infra", "Kesejahteraan Siswa":"tag-kesra" };
+const TAGNAMES  = { "Pengembangan Guru":"Guru", "Infrastruktur":"Infra", "Kesejahteraan Siswa":"Kesra" };
+const INTV_COLOR= { "Pengembangan Guru":"#1A3165", "Infrastruktur":"#006BA6", "Kesejahteraan Siswa":"#0F6E56" };
+const INTV_PROG = {
+  "Pengembangan Guru":  { label:"Program Pengembangan Guru (PKB)", desc:"Kompetensi guru di bawah standar nasional berdasarkan dimensi kualitas pembelajaran Rapor Pendidikan dan rendahnya rasio sertifikasi dari Dapodik.", progs:["PKB / P4TK","Guru Penggerak","Program Pendampingan"] },
+  "Infrastruktur":      { label:"Bantuan Sarana & Prasarana (DAK Fisik)", desc:"Kondisi bangunan rusak berat/ringan terdeteksi dari data fisik Dapodik. Skor ketersediaan fasilitas di bawah ambang batas nasional.", progs:["DAK Fisik","BOSP Reguler","BOS Sarpras"] },
+  "Kesejahteraan Siswa":{ label:"Program Kesejahteraan Siswa (PIP/BOS)", desc:"Indikator iklim keamanan dan karakter siswa rendah dari dimensi Sulingjar terstruktur. Divalidasi dengan data sosio-ekonomi Dapodik.", progs:["PIP","BOS Afirmasi","Program UKS/BK"] },
+};
+const YEARS = ["2020","2021","2022","2023","2024"];
+
+let selected = SCHOOLS[0];
+
+function pillHtml(level) {
+  return `<span class="risk-pill ${PILLCLASS[level]}">${level}</span>`;
+}
+
+function renderList() {
+  const jf = document.getElementById('filter-jenjang').value;
+  const rf = document.getElementById('filter-risk').value;
+  const filtered = SCHOOLS.filter(s =>
+    (jf === 'semua' || s.jenjang === jf) &&
+    (rf === 'semua' || s.level === rf)
+  );
+  document.getElementById('count-label').textContent = filtered.length + ' sekolah';
+  const list = document.getElementById('school-list');
+  list.innerHTML = filtered.map(s => `
+    <div class="school-item ${s.id === selected.id ? 'active' : ''}" onclick="selectSchool(${s.id})">
+      <div class="school-row1">
+        <div>
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
+            <span class="rank-num">#${s.rank}</span>
+            <span class="school-name">${s.name}</span>
+          </div>
+          <div class="school-sub">${s.jenjang} · Kec. ${s.kec}</div>
+        </div>
+        ${pillHtml(s.level)}
+      </div>
+      <div class="score-bar-wrap">
+        <div class="score-bar-bg"><div class="score-bar-fill" style="width:${s.risk}%;background:${RISKCOLOR[s.level]}"></div></div>
+        <div class="score-num" style="color:${RISKCOLOR[s.level]}">${s.risk}</div>
+      </div>
+      <div class="tags">${s.intv.map(t => `<span class="tag ${TAGCLASS[t]}">${TAGNAMES[t]}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+function filterSchools() { renderList(); }
+
+function selectSchool(id) {
+  selected = SCHOOLS.find(s => s.id === id);
+  renderDetail();
+  renderList();
+}
+
+function renderDetail() {
+  const s = selected;
+  document.getElementById('det-name').textContent = s.name;
+  document.getElementById('det-meta').textContent = `${s.jenjang} · Kec. ${s.kec} · Akreditasi ${s.akreditasi} · Rank #${s.rank} dari 1.247 sekolah`;
+  document.getElementById('det-pill').innerHTML = pillHtml(s.level);
+  document.getElementById('det-score').textContent = s.risk;
+  document.getElementById('det-score').style.color = RISKCOLOR[s.level];
+  document.getElementById('det-trend').textContent = s.trend;
+  document.getElementById('det-trend').className = s.trendClass;
+  document.getElementById('m-lit').style.width = s.lit + '%';
+  document.getElementById('mv-lit').textContent = s.lit;
+  document.getElementById('m-num').style.width = s.num + '%';
+  document.getElementById('mv-num').textContent = s.num;
+  document.getElementById('m-iklim').style.width = s.iklim + '%';
+  document.getElementById('mv-iklim').textContent = s.iklim;
+  renderTabRekom(s);
+  renderTabDriver(s);
+  renderTabTren(s);
+}
+
+function renderTabRekom(s) {
+  const el = document.getElementById('tab-rekom');
+  el.innerHTML = `<p style="font-size:11px;color:var(--color-text-secondary);margin-bottom:10px;line-height:1.5">
+    Rekomendasi dihasilkan otomatis dari profil dimensi risiko sekolah. Setiap rekomendasi dapat ditelusuri ke indikator Rapor Pendidikan dan Dapodik yang menjadi driver-nya.
+  </p>` + s.intv.map((intv, i) => {
+    const p = INTV_PROG[intv];
+    const conf = s.conf[i] || 80;
+    const bc = INTV_COLOR[intv];
+    return `<div class="rekomendasi-card" style="border-left:3px solid ${bc}">
+      <div class="rekom-header">
+        <div class="rekom-title" style="color:${bc}">${p.label}</div>
+        <div class="prio-badge" style="background:${bc}15;color:${bc}">Prioritas ${i+1}</div>
+      </div>
+      <div class="rekom-body">${p.desc}</div>
+      <div class="program-chips">${p.progs.map(pr => `<div class="chip">${pr}</div>`).join('')}</div>
+      <div class="conf-row">
+        <div class="conf-label">Confidence</div>
+        <div class="conf-bar-bg"><div class="conf-bar-fill" style="width:${conf}%"></div></div>
+        <div class="conf-num">${conf}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTabDriver(s) {
+  const el = document.getElementById('tab-driver');
+  const bad = s.drivers.filter(d => d.bad);
+  const good = s.drivers.filter(d => !d.bad);
+  el.innerHTML = `
+    <div class="driver-section">
+      <div class="driver-title">Faktor yang mendorong risiko tinggi</div>
+      ${bad.map(d => `
+        <div class="driver-item">
+          <div class="driver-name">${d.n}</div>
+          <div style="flex:1;position:relative">
+            <div class="driver-bar-bg">
+              <div class="driver-bar-fill" style="width:${d.v}%;background:#EF4444"></div>
+            </div>
+            <div style="position:absolute;top:-4px;bottom:-4px;left:${d.nat}%;width:1px;background:#1A3165;opacity:0.4"></div>
+          </div>
+          <div class="driver-val" style="color:#EF4444">${d.v}</div>
+          <div class="driver-delta" style="color:#EF4444">−${d.nat - d.v} vs nas.</div>
+        </div>`).join('')}
+    </div>
+    <div class="driver-section">
+      <div class="driver-title">Dimensi yang relatif baik</div>
+      ${good.map(d => `
+        <div class="driver-item">
+          <div class="driver-name">${d.n}</div>
+          <div style="flex:1;position:relative">
+            <div class="driver-bar-bg">
+              <div class="driver-bar-fill" style="width:${d.v}%;background:#10B981"></div>
+            </div>
+            <div style="position:absolute;top:-4px;bottom:-4px;left:${d.nat}%;width:1px;background:#1A3165;opacity:0.4"></div>
+          </div>
+          <div class="driver-val" style="color:#10B981">${d.v}</div>
+          <div class="driver-delta" style="color:#10B981">+${d.v - d.nat} vs nas.</div>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:10px;color:var(--color-text-tertiary);display:flex;align-items:center;gap:5px;margin-top:4px">
+      <div style="width:12px;height:1px;background:#1A3165;opacity:0.4"></div> Rata-rata nasional
+    </div>`;
+}
+
+function renderTabTren(s) {
+  const el = document.getElementById('tab-tren');
+  const nat = 71;
+  el.innerHTML = `
+    <div class="chart-wrap">
+      <div class="chart-label">AKM Literasi — tren 5 tahun vs rata-rata nasional (${nat})</div>
+      ${s.akm.map((v, i) => `
+        <div class="bar-chart-row">
+          <div class="bar-year">${YEARS[i]}</div>
+          <div class="bar-bg" style="position:relative">
+            <div class="bar-fill" style="width:${v}%;background:${i === 4 ? '#1A3165' : '#CBD5E1'}">
+              <span class="bar-score" style="color:${i === 4 ? 'white' : '#4A4A4A'}">${v}</span>
+            </div>
+            <div style="position:absolute;top:0;bottom:0;left:${nat}%;width:1px;background:#EF4444;opacity:0.6"></div>
+          </div>
+        </div>`).join('')}
+      <div style="font-size:10px;color:var(--color-text-tertiary);margin-top:6px;display:flex;align-items:center;gap:5px">
+        <div style="width:12px;height:1px;background:#EF4444;opacity:0.6"></div> Rata-rata nasional (${nat})
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--color-text-secondary);line-height:1.5;padding:10px 12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md)">
+      <strong style="color:var(--color-text-primary)">Insight:</strong> Tren ${s.trend === '↑ membaik' ? 'positif' : s.trend === '→ stabil' ? 'stabil' : 'negatif 5 tahun berturut-turut'} 
+      — ${s.trend === '↑ membaik' ? 'sekolah ini perlu dipantau agar tren positif berlanjut.' : s.trend === '→ stabil' ? 'intervensi diperlukan untuk mengubah plateauing trend menjadi positif.' : 'intervensi segera diperlukan sebelum kondisi semakin memburuk.'}
+    </div>`;
+}
+
+function switchTab(el, tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+  document.getElementById(tabId).style.display = 'block';
+}
+
+function renderBottomCharts() {
+  const distData = [
+    { label:"0–20", n:42, color:"#EF4444" },
+    { label:"21–40", n:145, color:"#F59E0B" },
+    { label:"41–60", n:287, color:"#3B82F6" },
+    { label:"61–80", n:498, color:"#10B981" },
+    { label:"81–100", n:275, color:"#1A3165" },
+  ];
+  const max = 498;
+  document.getElementById('dist-chart').innerHTML = distData.map(d => `
+    <div class="dist-row">
+      <div class="dist-label">${d.label}</div>
+      <div class="dist-bg"><div class="dist-fill" style="width:${Math.round(d.n/max*100)}%;background:${d.color}"></div></div>
+      <div class="dist-num">${d.n}</div>
+    </div>`).join('');
+
+  const intData = [
+    { label:"PKB Guru", n:612, color:"#1A3165", max:1247 },
+    { label:"DAK Fisik", n:489, color:"#006BA6", max:1247 },
+    { label:"PIP / BOS", n:371, color:"#0F6E56", max:1247 },
+  ];
+  document.getElementById('intervensi-chart').innerHTML = intData.map(d => `
+    <div class="dist-row">
+      <div class="dist-label">${d.label}</div>
+      <div class="dist-bg"><div class="dist-fill" style="width:${Math.round(d.n/d.max*100)}%;background:${d.color}"></div></div>
+      <div class="dist-num">${d.n}</div>
+    </div>`).join('') + `<div style="font-size:10px;color:var(--color-text-tertiary);margin-top:4px">* satu sekolah dapat membutuhkan lebih dari satu jenis intervensi</div>`;
+}
+
+renderList();
+renderDetail();
+renderBottomCharts();
+</script>
